@@ -20,7 +20,7 @@
     "LocalDbSharedInstanceName": "",
     "SupportsFileStream": false,
     "FileStreamDirectory": "",
-    "UseManagedSNIOnWindows": false,
+    "UseManagedSNIOnWindows": true,
     "DNSCachingConnString": "",
     "DNSCachingServerCR": "",
     "DNSCachingServerTR": "",
