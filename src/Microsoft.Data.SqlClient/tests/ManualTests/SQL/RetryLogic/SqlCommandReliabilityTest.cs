@@ -524,10 +524,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            int numberOfTries = 2;
             string query = "SELECT bad command";
             int retriesCount = 0;
-            int concurrentExecution = 3;
+            int concurrentExecution = 5;
             provider.Retrying += (s, e) => Interlocked.Increment(ref retriesCount);
 
             Parallel.For(0, concurrentExecution,

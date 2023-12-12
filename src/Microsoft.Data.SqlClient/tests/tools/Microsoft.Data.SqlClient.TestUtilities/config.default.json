@@ -1,6 +1,6 @@
 {
-    "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
-    "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
+    "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;Connect Timeout=30;",
+    "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;Connect Timeout=30;",
     "TCPConnectionStringHGSVBS": "",
     "TCPConnectionStringAASVBS": "",
     "TCPConnectionStringNoneVBS": "",
