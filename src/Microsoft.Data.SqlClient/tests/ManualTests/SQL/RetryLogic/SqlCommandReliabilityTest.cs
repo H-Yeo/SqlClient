@@ -527,7 +527,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int numberOfTries = 2;
             string query = "SELECT bad command";
             int retriesCount = 0;
-            int concurrentExecution = 5;
+            int concurrentExecution = 15;
             provider.Retrying += (s, e) => Interlocked.Increment(ref retriesCount);
 
             Parallel.For(0, concurrentExecution,
