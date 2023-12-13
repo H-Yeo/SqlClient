@@ -527,8 +527,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int numberOfTries = 2;
             string query = "SELECT bad command";
             int retriesCount = 0;
-            int concurrentExecution = 15;
+            int concurrentExecution = 35;
             provider.Retrying += (s, e) => Interlocked.Increment(ref retriesCount);
+
+            ThreadPool.SetMaxThreads(5, 5);
 
             Parallel.For(0, concurrentExecution,
             i =>
@@ -539,6 +541,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cnn.Open();
                     cmd.RetryLogicProvider = provider;
                     cmd.CommandText = query;
+
+                    for (int j = 0; j < 50_000; j++)
+                    {
+                        int delay = j * j;
+                    }
                     Assert.Throws<AggregateException>(() => cmd.ExecuteScalar());
                 }
             });
