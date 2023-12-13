@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         serverName,
                         pipeName,
                         PipeDirection.InOut,
-                        PipeOptions.WriteThrough); // test without async option
+                        PipeOptions.Asynchronous | PipeOptions.WriteThrough); // test without async option
 
                     if (timeout.IsInfinite)
                     {
