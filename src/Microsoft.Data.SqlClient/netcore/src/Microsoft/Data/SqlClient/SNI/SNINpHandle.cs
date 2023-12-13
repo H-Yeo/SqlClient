@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         serverName,
                         pipeName,
                         PipeDirection.InOut,
-                        PipeOptions.Asynchronous | PipeOptions.WriteThrough); // test without async option
+                        PipeOptions.WriteThrough); // test without async option
 
                     bool isInfiniteTimeOut = long.MaxValue == timerExpire;
                     if (isInfiniteTimeOut)
