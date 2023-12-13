@@ -53,7 +53,6 @@
     <FunctionalTests Include="**/tools/TDS/TDS/TDS.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
-    <FunctionalTests Include="**/tools/Microsoft.DotNet.XUnitExtensions/Microsoft.DotNet.XUnitExtensions.csproj" />
     <FunctionalTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <FunctionalTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" />
@@ -64,7 +63,6 @@
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Utf8String/Utf8String.csproj" />
-    <ManualTests Include="**/tools/Microsoft.DotNet.XUnitExtensions/Microsoft.DotNet.XUnitExtensions.csproj" />
     <ManualTests Include="**/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj"/>
     <ManualTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <ManualTests Include="**/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
@@ -105,7 +103,7 @@
 
   <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true'">
     <PropertyGroup>
-      <DotnetBuildCmd>$(DotNetCmd) dotnet build -c Release -p:ReferenceType=$(ReferenceType)"</DotnetBuildCmd>
+      <DotnetBuildCmd>$(DotNetCmd) dotnet build -c Release -p:ReferenceType=$(ReferenceType)</DotnetBuildCmd>
     </PropertyGroup>
     <Exec Command="$(DotnetBuildCmd)" WorkingDirectory="$(GenAPISrcDir)Microsoft.DotNet.GenAPI\" />
   </Target>
@@ -179,14 +177,14 @@
     <!-- Windows -->
     <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(FunctionalTestsProj)&quot; -p:Configuration=$(Configuration) -p:Target$(TFGroup)Version=$(TF) --no-build -v n --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Windows$(TargetGroup) --filter &quot;category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests&quot; &quot;--logger:trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' == 'true'"/>
     <!-- Unix -->
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(FunctionalTestsProj)&quot; -p:Configuration=$(Configuration) -p:TargetNetCoreVersion=$(TF) --no-build -v n -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Unixnetcoreapp --filter &quot;category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests&quot; &quot;--logger:trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' != 'true'"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(FunctionalTestsProj)&quot; -p:Configuration=$(Configuration) -p:TargetNetCoreVersion=$(TF) --no-build -v n -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Unixnetcoreapp --collect &quot;Code coverage&quot; --filter &quot;category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests&quot; &quot;--logger:trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' != 'true'"/>
   </Target>
 
   <Target Name="RunManualTests">
     <!-- Windows -->
     <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(ManualTestsProj)&quot; -p:Configuration=$(Configuration) -p:Target$(TFGroup)Version=$(TF) --no-build -l &quot;console;verbosity=normal&quot; --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Windows$(TargetGroup) --filter &quot;category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests&quot; &quot;--logger:trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' == 'true'"/>
     <!-- Unix -->
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(ManualTestsProj)&quot; -p:Configuration=$(Configuration) -p:TargetNetCoreVersion=$(TF) --no-build -l &quot;console;verbosity=normal&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Unixnetcoreapp --filter &quot;category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests&quot; &quot;--logger:trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' != 'true'"/>
+    <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(ManualTestsProj)&quot; -p:Configuration=$(Configuration) -p:TargetNetCoreVersion=$(TF) --no-build -l &quot;console;verbosity=normal&quot; --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Unixnetcoreapp --filter &quot;category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests&quot; &quot;--logger:trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' != 'true'"/>
   </Target>
 
   <Target Name="Clean">

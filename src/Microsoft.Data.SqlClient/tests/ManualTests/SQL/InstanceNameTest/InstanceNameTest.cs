@@ -33,7 +33,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Open();
                 connection.Close();
 
-                if (builder.Encrypt != SqlConnectionEncryptOption.Strict)
+                // We can only connect via IP address if we aren't doing remote Kerberos or strict TLS
+                if (builder.Encrypt != SqlConnectionEncryptOption.Strict &&
+                        (!builder.IntegratedSecurity || hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                         hostname.Equals(Environment.MachineName, StringComparison.OrdinalIgnoreCase)))
                 {
                     // Exercise the IP address-specific code in SSRP
                     IPAddress[] addresses = Dns.GetHostAddresses(hostname);
@@ -64,7 +67,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (IsBrowserAlive(hostname) && IsValidInstance(hostname, instanceName))
             {
                 builder.DataSource = hostname + "\\" + instanceName;
-                
                 using SqlConnection connection = new(builder.ConnectionString);
                 connection.Open();
             }
@@ -74,7 +76,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (!IsValidInstance(hostname, instanceName))
             {
                 builder.DataSource = hostname + "\\" + instanceName;
-                
+
                 using SqlConnection connection = new(builder.ConnectionString);
                 SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
                 Assert.Contains("Error Locating Server/Instance Specified", ex.Message);

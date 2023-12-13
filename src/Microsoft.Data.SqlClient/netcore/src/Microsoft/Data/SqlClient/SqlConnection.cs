@@ -6,7 +6,6 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -14,7 +13,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Security;
 using System.Threading;
@@ -88,6 +86,8 @@ namespace Microsoft.Data.SqlClient
 
         /// Instance-level list of custom key store providers. It can be set more than once by the user.
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
+
+        private Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
             _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
@@ -266,11 +266,15 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Combined list of provider names</returns>
         internal static List<string> GetColumnEncryptionSystemKeyStoreProvidersNames()
         {
-            return s_systemColumnEncryptionKeyStoreProviders.Keys.ToList();
+            if (s_systemColumnEncryptionKeyStoreProviders.Count > 0)
+            {
+                return new List<string>(s_systemColumnEncryptionKeyStoreProviders.Keys);
+            }
+            return new List<string>(0);
         }
 
         /// <summary>
-        /// This function returns a list of the names of the custom providers currently registered. If the 
+        /// This function returns a list of the names of the custom providers currently registered. If the
         /// instance-level cache is not empty, that cache is used, else the global cache is used.
         /// </summary>
         /// <returns>Combined list of provider names</returns>
@@ -279,13 +283,13 @@ namespace Microsoft.Data.SqlClient
             if (_customColumnEncryptionKeyStoreProviders is not null &&
                 _customColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return _customColumnEncryptionKeyStoreProviders.Keys.ToList();
+                return new List<string>(_customColumnEncryptionKeyStoreProviders.Keys);
             }
             if (s_globalCustomColumnEncryptionKeyStoreProviders is not null)
             {
-                return s_globalCustomColumnEncryptionKeyStoreProviders.Keys.ToList();
+                return new List<string>(s_globalCustomColumnEncryptionKeyStoreProviders.Keys);
             }
-            return new List<string>();
+            return new List<string>(0);
         }
 
         /// <summary>
@@ -342,7 +346,7 @@ namespace Microsoft.Data.SqlClient
                 new(customProviders, StringComparer.OrdinalIgnoreCase);
 
             // Set the dictionary to the ReadOnly dictionary.
-            // This method can be called more than once. Re-registering a new collection will replace the 
+            // This method can be called more than once. Re-registering a new collection will replace the
             // old collection of providers.
             _customColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
         }
@@ -582,7 +586,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (_credential != null || _accessToken != null)
+                if (_credential != null || _accessToken != null || _accessTokenCallback != null)
                 {
                     SqlConnectionString connectionOptions = new SqlConnectionString(value);
                     if (_credential != null)
@@ -618,12 +622,18 @@ namespace Microsoft.Data.SqlClient
 
                         CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
                     }
-                    else if (_accessToken != null)
+
+                    if (_accessToken != null)
                     {
                         CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken(connectionOptions);
                     }
+
+                    if (_accessTokenCallback != null)
+                    {
+                        CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(connectionOptions);
+                    }
                 }
-                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken));
+                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _accessTokenCallback));
                 _connectionString = value;  // Change _connectionString value only after value is validated
                 CacheConnectionStringProperties();
             }
@@ -683,8 +693,31 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: value));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: value, accessTokenCallback: null));
                 _accessToken = value;
+            }
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessTokenCallback/*' />
+        public Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback
+        {
+            get { return _accessTokenCallback; }
+            set
+            {
+                // If a connection is connecting or is ever opened, AccessToken callback cannot be set
+                if (!InnerConnection.AllowSetConnectionString)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(AccessTokenCallback), InnerConnection.State);
+                }
+
+                if (value != null)
+                {
+                    // Check if the usage of AccessToken has any conflict with the keys used in connection string and credential
+                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback((SqlConnectionString)ConnectionOptions);
+                }
+
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: value));
+                _accessTokenCallback = value;
             }
         }
 
@@ -968,6 +1001,7 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
+
                     if (_accessToken != null)
                     {
                         throw ADP.InvalidMixedUsageOfCredentialAndAccessToken();
@@ -977,7 +1011,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = value;
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken, accessTokenCallback: _accessTokenCallback));
             }
         }
 
@@ -1023,6 +1057,33 @@ namespace Microsoft.Data.SqlClient
             if (_credential != null)
             {
                 throw ADP.InvalidMixedUsageOfCredentialAndAccessToken();
+            }
+
+            if(_accessTokenCallback != null)
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
+            }
+        }
+
+        // CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback: check if the usage of AccessTokenCallback has any conflict
+        //  with the keys used in connection string and credential
+        //  If there is any conflict, it throws InvalidOperationException
+        //  This is to be used setter of ConnectionString and AccessTokenCallback properties
+        private void CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(SqlConnectionString connectionOptions)
+        {
+            if (UsesIntegratedSecurity(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity();
+            }
+
+            if (UsesAuthentication(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndAuthentication();
+            }
+
+            if(_accessToken != null)
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
             }
         }
 
@@ -1414,6 +1475,12 @@ namespace Microsoft.Data.SqlClient
                         if (attempt == retryCount - 1)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ReconnectAsync | Info | Original Client Connection Id {0}, give up reconnection", _originalConnectionId);
+                            if (e.Class >= TdsEnums.FATAL_ERROR_CLASS)
+                            {
+                                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID {0} - Fatal Error occured. Error Class: {1}", _originalConnectionId, e.Class);
+                                // Error Class: 20-25, usually terminates the database connection
+                                InnerConnection.CloseConnection(InnerConnection.Owner, ConnectionFactory);
+                            }
                             throw SQL.CR_AllAttemptsFailed(e, _originalConnectionId);
                         }
                         if (timeout > 0 && ADP.TimerRemaining(commandTimeoutExpiration) < ADP.TimerFromSeconds(ConnectRetryInterval))
@@ -1708,6 +1775,14 @@ namespace Microsoft.Data.SqlClient
             return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
         }
 
+#if NET6_0_OR_GREATER
+        /// <inheritdoc />
+        public override bool CanCreateBatch => true;
+
+        /// <inheritdoc />
+        protected override DbBatch CreateDbBatch() => new SqlBatch(this);
+#endif
+
         private class OpenAsyncRetry
         {
             private SqlConnection _parent;
@@ -1812,7 +1887,35 @@ namespace Microsoft.Data.SqlClient
                 // are not present. Throwing on open with a meaningful message helps identify the issue.
                 if (_cultureCheckState == CultureCheckState.Unknown)
                 {
-                    _cultureCheckState = CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant") ? CultureCheckState.Invariant : CultureCheckState.Standard;
+                    // check if invariant state has been set by appcontext switch directly 
+                    if (AppContext.TryGetSwitch("System.Globalization.Invariant", out bool isEnabled) && isEnabled)
+                    {
+                        _cultureCheckState = CultureCheckState.Invariant;
+                    }
+                    else
+                    {
+                        // check if invariant state has been set through environment variables
+                        string envValue = Environment.GetEnvironmentVariable("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT");
+                        if (string.Equals(envValue, bool.TrueString, StringComparison.OrdinalIgnoreCase) || string.Equals(envValue, "1", StringComparison.OrdinalIgnoreCase))
+                        {
+                            _cultureCheckState = CultureCheckState.Invariant;
+                        }
+                        else
+                        {
+                            // if it hasn't been manually set it could still apply if the os doesn't have
+                            //  icu libs installed or is a native binary with icu support trimmed away
+                            // netcore 3.1 to net5 do not throw in attempting to create en-us in inariant mode
+                            // net6 and greater will throw so catch and infer invariant mode from the exception
+                            try
+                            {
+                                _cultureCheckState = CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant") ? CultureCheckState.Invariant : CultureCheckState.Standard;
+                            }
+                            catch (CultureNotFoundException)
+                            {
+                                _cultureCheckState = CultureCheckState.Invariant;
+                            }
+                        }
+                    }
                 }
                 if (_cultureCheckState == CultureCheckState.Invariant)
                 {
@@ -1820,7 +1923,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
+            _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
 
             if (connectionOptions != null &&
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
@@ -1849,7 +1952,7 @@ namespace Microsoft.Data.SqlClient
             // does not require GC.KeepAlive(this) because of ReRegisterForFinalize below.
 
             // Set future transient fault handling based on connection options
-            _applyTransientFaultHandling = (retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
+            _applyTransientFaultHandling = connectionOptions != null && connectionOptions.ConnectRetryCount > 0;
 
             var tdsInnerConnection = (SqlInternalConnectionTds)InnerConnection;
 
@@ -2092,7 +2195,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength(nameof(newPassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null);
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity)
@@ -2141,7 +2244,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength(nameof(newSecurePassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
 
@@ -2180,7 +2283,7 @@ namespace Microsoft.Data.SqlClient
                 if (con != null)
                     con.Dispose();
             }
-            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null);
+            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
             SqlConnectionFactory.SingletonInstance.ClearPool(key);
         }
@@ -2195,17 +2298,44 @@ namespace Microsoft.Data.SqlClient
         internal Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask, object value, int tag)
         {
             // Connection exists,  schedule removal, will be added to ref collection after calling ValidateAndReconnect
+
+            object state = null;
+            if (outerTask.AsyncState == this)
+            {
+                // if the caller created the TaskCompletionSource for outerTask with this connection
+                // as the state parameter (which is immutable) we can use task.AsyncState and state
+                // to carry the two pieces of state that we need into the continuation avoiding the
+                // allocation of a new state object to carry them
+                state = value;
+            }
+            else
+            {
+                // otherwise we need to create a Tuple to carry the two pieces of state
+                state = Tuple.Create(this, value);
+            }
+
             return outerTask.ContinueWith(
                 continuationFunction: static (task, state) =>
                 {
-                    Tuple<SqlConnection, object> parameters = (Tuple<SqlConnection, object>)state;
-                    SqlConnection connection = parameters.Item1;
-                    object obj = parameters.Item2;
+                    SqlConnection connection = null;
+                    object obj = null;
+                    if (state is Tuple<SqlConnection, object> tuple)
+                    {
+                        // special state tuple, unpack it
+                        connection = tuple.Item1;
+                        obj = tuple.Item2;
+                    }
+                    else
+                    {
+                        // use state on task and state object
+                        connection = (SqlConnection)task.AsyncState;
+                        obj = state;
+                    }
 
                     connection.RemoveWeakReference(obj);
                     return task;
                 },
-                state: Tuple.Create(this, value),
+                state: state,
                 scheduler: TaskScheduler.Default
            ).Unwrap();
         }
@@ -2304,7 +2434,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     return null;
-                };
+                }
             }
         }
 

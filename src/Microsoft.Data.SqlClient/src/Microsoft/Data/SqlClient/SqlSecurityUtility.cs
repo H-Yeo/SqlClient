@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -407,7 +406,7 @@ namespace Microsoft.Data.SqlClient
         private static bool ShouldUseInstanceLevelProviderFlow(string keyStoreName, SqlConnection connection, SqlCommand command)
         {
             return InstanceLevelProvidersAreRegistered(connection, command) &&
-                !keyStoreName.StartsWith(ADP.ColumnEncryptionSystemProviderNamePrefix);
+                !keyStoreName.StartsWith(ADP.ColumnEncryptionSystemProviderNamePrefix, StringComparison.Ordinal);
         }
 
         private static bool InstanceLevelProvidersAreRegistered(SqlConnection connection, SqlCommand command) =>
@@ -421,8 +420,21 @@ namespace Microsoft.Data.SqlClient
             if (SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.TryGetValue(serverName, out IList<string> trustedKeyPaths))
             {
                 // If the list is null or is empty or if the keyPath doesn't exist in the trusted key paths, then throw an exception.
-                if (trustedKeyPaths is null || trustedKeyPaths.Count() == 0 ||
-                    trustedKeyPaths.Any(trustedKeyPath => trustedKeyPath.Equals(keyPath, StringComparison.InvariantCultureIgnoreCase)) == false)
+
+                bool pathIsKnown = false;
+                if (trustedKeyPaths != null)
+                {
+                    foreach (string candidate in trustedKeyPaths)
+                    {
+                        if (string.Equals(keyPath, candidate, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            pathIsKnown = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!pathIsKnown)
                 {
                     // throw an exception since the key path is not in the trusted key paths list for this server
                     throw SQL.UntrustedKeyPath(keyPath, serverName);

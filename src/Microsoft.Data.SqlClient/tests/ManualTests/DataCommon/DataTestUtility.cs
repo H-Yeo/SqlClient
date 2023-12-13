@@ -20,6 +20,8 @@ using Microsoft.Identity.Client;
 using Xunit;
 using System.Net.NetworkInformation;
 using System.Text;
+using System.Security.Principal;
+using System.Runtime.InteropServices;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -60,6 +62,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool IsDNSCachingSupportedCR = false;  // this is for the control ring
         public static readonly bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         public static readonly string UserManagedIdentityClientId = null;
+        public static readonly string AliasName = null;
 
 
         public static readonly string EnclaveAzureDatabaseConnString = null;
@@ -75,6 +78,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
+        // uap constant
+        const long APPMODEL_ERROR_NO_PACKAGE = 15700L;
+        public static readonly bool IsRunningAsUWPApp = RunningAsUWPApp();
+
         private static Dictionary<string, bool> AvailableDatabases;
         private static BaseEventListener TraceListener;
 
@@ -83,6 +90,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //Kerberos variables
         public static readonly string KerberosDomainUser = null;
         internal static readonly string KerberosDomainPassword = null;
+
+        // SQL server Version
+        private static string s_sQLServerVersion = string.Empty;
+        private static bool s_isTDS8Supported;
+
+        public static string SQLServerVersion
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    s_sQLServerVersion ??= GetSqlServerVersion(TCPConnectionString);
+                }
+                return s_sQLServerVersion;
+            }
+        }
+
+        // Is TDS8 supported
+        public static bool IsTDS8Supported
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    s_isTDS8Supported = GetSQLServerStatusOnTDS8(TCPConnectionString);
+                }
+                return s_isTDS8Supported;
+            }
+        }
 
         static DataTestUtility()
         {
@@ -117,6 +153,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             KerberosDomainUser = c.KerberosDomainUser;
             ManagedIdentitySupported = c.ManagedIdentitySupported;
             IsManagedInstance = c.IsManagedInstance;
+            AliasName = c.AliasName;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
@@ -201,7 +238,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static string GenerateAccessToken(string authorityURL, string aADAuthUserID, string aADAuthPassword)
         {
-            return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).Result;
+            return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).GetAwaiter().GetResult();
         }
 
         private static Task<string> AcquireTokenAsync(string authorityURL, string userID, string password) => Task.Run(() =>
@@ -235,6 +272,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
 
+        public static string GetSqlServerVersion(string connectionString)
+        {
+            string version = string.Empty;
+            using SqlConnection conn = new(connectionString);
+            conn.Open();
+            SqlCommand command = conn.CreateCommand();
+            command.CommandText = "SELECT SERVERProperty('ProductMajorVersion')";
+            SqlDataReader reader = command.ExecuteReader();
+            if (reader.Read())
+            {
+                version = reader.GetString(0);
+            }
+            return version;
+        }
+
+        public static bool GetSQLServerStatusOnTDS8(string connectionString)
+        {
+            bool isTDS8Supported = false;
+            SqlConnectionStringBuilder builder = new(connectionString)
+            {
+                [nameof(SqlConnectionStringBuilder.Encrypt)] = SqlConnectionEncryptOption.Strict
+            };
+            try
+            {
+                SqlConnection conn = new(builder.ConnectionString);
+                conn.Open();
+                isTDS8Supported = true;
+            }
+            catch (SqlException)
+            {
+
+            }
+            return isTDS8Supported;
+        }
+
+        public static bool IsNotX86Architecture => RuntimeInformation.ProcessArchitecture != Architecture.X86;
+
         public static bool IsDatabasePresent(string name)
         {
             AvailableDatabases = AvailableDatabases ?? new Dictionary<string, bool>();
@@ -253,6 +327,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AvailableDatabases[name] = present;
             }
             return present;
+        }
+
+        public static bool IsAdmin
+        {
+            get
+            {
+#if NET6_0_OR_GREATER
+                System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
+#endif
+                return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+            }
         }
 
         /// <summary>
@@ -300,6 +385,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
         }
 
+        public static bool IsSQL2022() => string.Equals("16", SQLServerVersion.Trim());
+
+        public static bool IsSQL2019() => string.Equals("15", SQLServerVersion.Trim());
+
+        public static bool IsSQL2016() => string.Equals("14", s_sQLServerVersion.Trim());
+
+        public static bool IsSQLAliasSetup()
+        {
+            return !string.IsNullOrEmpty(AliasName);
+        }
         public static bool IsTCPConnStringSetup()
         {
             return !string.IsNullOrEmpty(TCPConnectionString);
@@ -341,12 +436,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
         }
 
+        public static bool IsTargetReadyForAeWithKeyStore()
+        {
+            return DataTestUtility.AreConnStringSetupForAE()
+#if NET6_0_OR_GREATER
+                // AE tests on Windows will use the Cert Store. On non-Windows, they require AKV.
+                && (OperatingSystem.IsWindows() || DataTestUtility.IsAKVSetupAvailable())
+#endif
+                ;
+        }
+
+        public static bool IsSupportingDistributedTransactions()
+        {
+#if NET7_0_OR_GREATER
+            return OperatingSystem.IsWindows() && System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture != System.Runtime.InteropServices.Architecture.X86 && IsNotAzureServer();
+#elif NETFRAMEWORK
+            return IsNotAzureServer();
+#else
+            return false;
+#endif
+        }
+
         public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
 
         public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
 
-        public static bool IsUsingNativeSNI() => !IsUsingManagedSNI();
-
+        public static bool IsUsingNativeSNI() =>
+#if !NETFRAMEWORK
+        DataTestUtility.IsNotUsingManagedSNIOnWindows();
+#else 
+            true;
+#endif
         // Synapse: UTF8 collations are not supported with Azure Synapse.
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/40103791-utf-8-collations-should-be-supported-in-azure-syna
         public static bool IsUTF8Supported()
@@ -621,7 +741,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Assert.False(true, "ERROR: Did not get expected exception");
+                Assert.Fail("ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -642,7 +762,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Assert.False(true, "ERROR: Did not get expected exception");
+                Assert.Fail("ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -663,7 +783,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Assert.False(true, "ERROR: Did not get expected exception");
+                Assert.Fail("ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -787,7 +907,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         foreach (var key in keys)
                         {
-                            if (cp.Trim().ToLower().StartsWith(key.Trim().ToLower()))
+                            if (cp.Trim().ToLower().StartsWith(key.Trim().ToLower(), StringComparison.Ordinal))
                             {
                                 return cp.Substring(cp.IndexOf('=') + 1);
                             }
@@ -812,7 +932,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         bool removeKey = false;
                         foreach (var keyToRemove in keysToRemove)
                         {
-                            if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower()))
+                            if (key.Trim().ToLower().StartsWith(keyToRemove.Trim().ToLower(), StringComparison.Ordinal))
                             {
                                 removeKey = true;
                                 break;
@@ -841,7 +961,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         if (!string.IsNullOrEmpty(key.Trim()))
                         {
-                            if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower()))
+                            if (key.Trim().ToLower().StartsWith(keyword.Trim().ToLower(), StringComparison.Ordinal))
                             {
                                 res = key.Substring(key.IndexOf('=') + 1).Trim();
                                 break;
@@ -864,22 +984,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (dataSource.Contains(":"))
             {
-                dataSource = dataSource.Substring(dataSource.IndexOf(":") + 1);
+                dataSource = dataSource.Substring(dataSource.IndexOf(":", StringComparison.Ordinal) + 1);
             }
 
             if (dataSource.Contains(","))
             {
-                if (!Int32.TryParse(dataSource.Substring(dataSource.LastIndexOf(",") + 1), out port))
+                if (!Int32.TryParse(dataSource.Substring(dataSource.LastIndexOf(",", StringComparison.Ordinal) + 1), out port))
                 {
                     return false;
                 }
-                dataSource = dataSource.Substring(0, dataSource.IndexOf(",") - 1);
+                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal) - 1);
             }
 
             if (dataSource.Contains("\\"))
             {
-                instanceName = dataSource.Substring(dataSource.LastIndexOf("\\") + 1);
-                dataSource = dataSource.Substring(0, dataSource.LastIndexOf("\\"));
+                instanceName = dataSource.Substring(dataSource.LastIndexOf("\\", StringComparison.Ordinal) + 1);
+                dataSource = dataSource.Substring(0, dataSource.LastIndexOf("\\", StringComparison.Ordinal));
             }
 
             hostname = dataSource;
@@ -906,7 +1026,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             protected override void OnEventSourceCreated(EventSource eventSource)
             {
-                if (eventSource.Name.StartsWith(Name))
+                if (eventSource.Name.StartsWith(Name, StringComparison.Ordinal))
                 {
                     // Collect all traces for better code coverage
                     EnableEvents(eventSource, EventLevel.LogAlways, EventKeywords.All);
@@ -931,17 +1051,50 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Resolves the machine's fully qualified domain name if it is applicable.
         /// </summary>
         /// <returns>Returns FQDN if the client was domain joined otherwise the machine name.</returns>
-        public static string GetMachineFQDN()
+        public static string GetMachineFQDN(string hostname)
         {
             IPGlobalProperties machineInfo = IPGlobalProperties.GetIPGlobalProperties();
             StringBuilder fqdn = new();
-            fqdn.Append(machineInfo.HostName);
-            if (!string.IsNullOrEmpty(machineInfo.DomainName))
+            if (hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                hostname.Equals(machineInfo.HostName, StringComparison.OrdinalIgnoreCase))
             {
-                fqdn.Append(".");
-                fqdn.Append(machineInfo.DomainName);
+                fqdn.Append(machineInfo.HostName);
+                if (!string.IsNullOrEmpty(machineInfo.DomainName))
+                {
+                    fqdn.Append(".");
+                    fqdn.Append(machineInfo.DomainName);
+                }
+            }
+            else
+            {
+                IPHostEntry host = Dns.GetHostEntry(hostname);
+                fqdn.Append(host.HostName);
             }
             return fqdn.ToString();
+        }
+
+        private static bool RunningAsUWPApp()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return false;
+            }
+            else
+            {
+                [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+                static extern int GetCurrentPackageFullName(ref int packageFullNameLength, StringBuilder packageFullName);
+
+                {
+                    int length = 0;
+                    StringBuilder sb = new(0);
+                    _ = GetCurrentPackageFullName(ref length, sb);
+
+                    sb = new StringBuilder(length);
+                    int result = GetCurrentPackageFullName(ref length, sb);
+
+                    return result != APPMODEL_ERROR_NO_PACKAGE;
+                }
+            }
         }
     }
 }

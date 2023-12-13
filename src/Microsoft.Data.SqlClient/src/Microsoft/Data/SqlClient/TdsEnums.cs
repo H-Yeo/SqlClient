@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using Microsoft.Data.Common;
@@ -143,6 +144,9 @@ namespace Microsoft.Data.SqlClient
         public const byte SQLALTCONTROL = 0xaf;
         public const byte SQLROW = 0xd1;
         public const byte SQLNBCROW = 0xd2;    // same as ROW with null-bit-compression support
+        /// <summary>
+        /// Deprecated in TDS7.4 (2010)
+        /// </summary>
         public const byte SQLALTROW = 0xd3;
         public const byte SQLDONE = 0xfd;
         public const byte SQLDONEPROC = 0xfe;
@@ -157,6 +161,9 @@ namespace Microsoft.Data.SqlClient
         public const byte SQLSECLEVEL = 0xed;    // Security level token ???
         public const byte SQLROWCRC = 0x39;    // ROWCRC datastream???
         public const byte SQLCOLMETADATA = 0x81;    // Column metadata including name
+        /// <summary>
+        /// Deprecated in TDS7.4 (2010)
+        /// </summary>
         public const byte SQLALTMETADATA = 0x88;    // Alt column metadata including name
         public const byte SQLSSPI = 0xed;    // SSPI data
         public const byte SQLFEDAUTHINFO = 0xee;    // Info for client to generate fed auth token
@@ -272,6 +279,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW = 0x03; // Using the Interactive byte as that is the closest we have
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY = 0x03; // Using the Interactive byte as that's supported for Identity based authentication
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT = 0x03; // Using the Interactive byte as that is the closest we have to non-password based authentication modes
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYTOKENCREDENTIAL = 0x03; // Using the Interactive byte as that is the closest we have to non-password based authentication modes
 
         public enum ActiveDirectoryWorkflow : byte
         {
