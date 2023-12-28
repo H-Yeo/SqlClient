@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using VerifyCS = Microsoft.Data.SqlClient.Analyzers.Test.CSharpCodeFixVerifier<
-    Microsoft.Data.SqlClient.Analyzers.MicrosoftDataSqlClientAnalyzersAnalyzer,
-    Microsoft.Data.SqlClient.Analyzers.MicrosoftDataSqlClientAnalyzersCodeFixProvider>;
+    Microsoft.Data.SqlClient.Analyzers.InvariantGlobalizationAnalyzer,
+    Microsoft.Data.SqlClient.Analyzers.InvariantGlobalizationCodeFixProvider>;
 
 namespace Microsoft.Data.SqlClient.Analyzers.Test
 {

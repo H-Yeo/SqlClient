@@ -11,7 +11,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Microsoft.Data.SqlClient.Analyzers
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class MicrosoftDataSqlClientAnalyzersAnalyzer : DiagnosticAnalyzer
+    public class InvariantGlobalizationAnalyzer : DiagnosticAnalyzer
     {
         public const string DiagnosticId = "MicrosoftDataSqlClientAnalyzers";
 

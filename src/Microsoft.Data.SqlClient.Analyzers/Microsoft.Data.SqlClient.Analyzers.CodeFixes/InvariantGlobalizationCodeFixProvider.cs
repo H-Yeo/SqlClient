@@ -15,12 +15,12 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace Microsoft.Data.SqlClient.Analyzers
 {
-    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(MicrosoftDataSqlClientAnalyzersCodeFixProvider)), Shared]
-    public class MicrosoftDataSqlClientAnalyzersCodeFixProvider : CodeFixProvider
+    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(InvariantGlobalizationCodeFixProvider)), Shared]
+    public class InvariantGlobalizationCodeFixProvider : CodeFixProvider
     {
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
-            get { return ImmutableArray.Create(MicrosoftDataSqlClientAnalyzersAnalyzer.DiagnosticId); }
+            get { return ImmutableArray.Create(InvariantGlobalizationAnalyzer.DiagnosticId); }
         }
 
         public sealed override FixAllProvider GetFixAllProvider()
