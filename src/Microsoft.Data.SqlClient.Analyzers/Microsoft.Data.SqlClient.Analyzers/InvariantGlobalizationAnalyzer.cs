@@ -61,8 +61,8 @@ namespace Microsoft.Data.SqlClient.Analyzers
         {
             bool isNativeAOT = false;
 #if NET6_0_OR_GREATER  
-        var stackTrace = new StackTrace(false);
-        isNativeAOT = stackTrace.GetFrame(0)?.GetMethod() is null;
+            var stackTrace = new StackTrace(false);
+            isNativeAOT = stackTrace.GetFrame(0)?.GetMethod() is null;
 #endif
             return isNativeAOT;
         }
