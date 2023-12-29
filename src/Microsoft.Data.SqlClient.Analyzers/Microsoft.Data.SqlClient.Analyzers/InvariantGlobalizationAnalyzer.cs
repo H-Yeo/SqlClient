@@ -56,15 +56,15 @@ namespace Microsoft.Data.SqlClient.Analyzers
                 throw new ArgumentNullException(nameof(context));
             }
 
-            bool isInvariantGlobalization = "Á".Equals("á", StringComparison.CurrentCultureIgnoreCase);
-            bool isNativeAOT = false; //TODO: We need to figure out how this isNativeAOT?
-
+            bool isInvariantGlobalization = "Á".Equals("á", StringComparison.CurrentCultureIgnoreCase)
 #if NET6_0_OR_GREATER
             // Microsoft Documentation on Breaking Changes for Invariant Globalization
             // https://learn.microsoft.com/en-us/dotnet/core/compatibility/globalization/6.0/culture-creation-invariant-mode
 #else
             isInvariantGlobalization = true;
 #endif
+
+            bool isNativeAOT = isNativeAheadOfTimeCompilation();
 
             context.RegisterOperationAction(context =>
             {
@@ -77,6 +77,17 @@ namespace Microsoft.Data.SqlClient.Analyzers
                 }
 
             }, OperationKind.Invocation);
+        }
+
+        private static bool isNativeAheadOfTimeCompilation()
+        {
+            bool isNativeAOT = false;
+
+#if NET6_0_OR_GREATER  
+        var stackTrace = new StackTrace(false);
+        isNativeAOT = stackTrace.GetFrame(0)?.GetMethod() is null;
+#endif
+            return isNativeAOT;
         }
     }
 }
