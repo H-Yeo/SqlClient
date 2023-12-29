@@ -21,7 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Microsoft.Data.SqlClient.Analyzers.CodeFixes\Microsoft.Data.SqlClient.Analyzers.CodeFixes.csproj" />
     <ProjectReference Include="..\Microsoft.Data.SqlClient.Analyzers\Microsoft.Data.SqlClient.Analyzers.csproj" />
   </ItemGroup>
 
