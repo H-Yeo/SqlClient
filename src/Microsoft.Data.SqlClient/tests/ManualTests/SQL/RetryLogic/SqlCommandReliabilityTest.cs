@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class SqlCommandReliabilityTest : IDisposable
     {
-        private const int ConcurrentParallelExecutions = 3;
+        private const int ConcurrentParallelExecutions = 25;
         private const string UnexpectedSqlConnectionExceptionMessage = "An unexpected SQL Connection Error occured and is not part of the test.";
         private readonly string _exceedErrMsgPattern = RetryLogicTestHelper.s_exceedErrMsgPattern;
         private readonly string _cancelErrMsgPattern = RetryLogicTestHelper.s_cancelErrMsgPattern;
