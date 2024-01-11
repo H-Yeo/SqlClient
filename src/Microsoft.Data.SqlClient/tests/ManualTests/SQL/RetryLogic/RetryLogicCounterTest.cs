@@ -18,6 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("ExecuteNonQueryAsync", 3)]
         public async void ValidateRetryCount_SqlCommand_Async(string methodName, int numOfTries)
         {
+            Assert.Fail("Intential Failure");
             ErrorInfoRetryLogicProvider _errorInfoRetryProvider = new(
                 SqlConfigurableRetryFactory.CreateFixedRetryProvider(new SqlRetryLogicOption()
                 { NumberOfTries = numOfTries, TransientErrors = new[] { 50000 } }));

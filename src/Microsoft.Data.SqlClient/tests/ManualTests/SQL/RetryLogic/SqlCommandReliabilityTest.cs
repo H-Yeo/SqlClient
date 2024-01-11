@@ -421,6 +421,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public async void RetryExecuteAsyncFail(string cnnString, SqlRetryLogicBaseProvider provider)
         {
+            Assert.Fail("Intential Failure");
             int numberOfTries = provider.RetryLogic.NumberOfTries;
             int cancelAfterRetries = numberOfTries + 1;
             int currentRetries = 0;
@@ -553,6 +554,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
         {
+            Assert.Fail("Intential Failure");
             string query = "SELECT bad command";
             ProcessDataInParallel(cnnString, provider, query, cmd => cmd.ExecuteScalar());
             ProcessDataInParallel(cnnString, provider, query, cmd => cmd.ExecuteNonQuery());
