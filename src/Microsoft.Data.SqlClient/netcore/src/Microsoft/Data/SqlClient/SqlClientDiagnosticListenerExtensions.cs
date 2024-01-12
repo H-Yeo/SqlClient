@@ -113,7 +113,7 @@ namespace Microsoft.Data.SqlClient
                         OperationId = operationId,
                         Operation = operation,
                         Connection = sqlConnection,
-                        ClientVersion = ThisAssembly.InformationalVersion,
+                        //ClientVersion = ThisAssembly.InformationalVersion,
                         Timestamp = Stopwatch.GetTimestamp()
                     });
 
@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         ConnectionId = sqlConnection.ClientConnectionId,
                         Connection = sqlConnection,
-                        ClientVersion = ThisAssembly.InformationalVersion,
+                        //ClientVersion = ThisAssembly.InformationalVersion,
                         Statistics = sqlConnection.Statistics?.GetDictionary(),
                         Timestamp = Stopwatch.GetTimestamp()
                     });
@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClient
                         Operation = operation,
                         ConnectionId = sqlConnection.ClientConnectionId,
                         Connection = sqlConnection,
-                        ClientVersion = ThisAssembly.InformationalVersion,
+                        //ClientVersion = ThisAssembly.InformationalVersion,
                         Exception = ex,
                         Timestamp = Stopwatch.GetTimestamp()
                     });

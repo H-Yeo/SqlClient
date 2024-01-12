@@ -10,8 +10,8 @@ namespace Microsoft.Data.SqlClient
     using System.Diagnostics;
     using System.Runtime.ConstrainedExecution;
     using System.Threading;
-    using Microsoft.Data.Common;
-    using Microsoft.Data.ProviderBase;
+    using global::Microsoft.Data.Common;
+    using global::Microsoft.Data.ProviderBase;
 
     using SysTx = System.Transactions;
 

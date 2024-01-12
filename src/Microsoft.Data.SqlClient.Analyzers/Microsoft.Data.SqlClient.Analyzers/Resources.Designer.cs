@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.TestAnalyzer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type names should be all uppercase..
+        ///   Looks up a localized string similar to MyFailTest class found.
         /// </summary>
         internal static string AnalyzerDescription {
             get {
@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.TestAnalyzer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type name &apos;{0}&apos; contains lowercase letters.
+        ///   Looks up a localized string similar to Type name &apos;{0}&apos; contains MyFailTest.
         /// </summary>
         internal static string AnalyzerMessageFormat {
             get {
@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient.TestAnalyzer {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type name contains lowercase letters.
+        ///   Looks up a localized string similar to Type name contains MyFailTest.
         /// </summary>
         internal static string AnalyzerTitle {
             get {

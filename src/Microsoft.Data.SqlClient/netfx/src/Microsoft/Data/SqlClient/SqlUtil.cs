@@ -15,11 +15,11 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 using SysTx = System.Transactions;
 
 namespace Microsoft.Data.SqlClient
 {
-    using Microsoft.Data.Common;
     static internal class AsyncHelper
     {
         internal static Task CreateContinuationTask(Task task, Action onSuccess, SqlInternalConnectionTds connectionToDoom = null, Action<Exception> onFailure = null)

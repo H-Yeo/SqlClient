@@ -14,14 +14,14 @@ namespace Microsoft.Data.SqlClient.Analyzers
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class MicrosoftDataSqlClientTestAnalyzer : DiagnosticAnalyzer
     {
-        public const string DiagnosticId = "MicrosoftDataSqlClientAnalyzers";
+        public const string DiagnosticId = "MicrosoftDataSqlClientMyFailTest";
 
         // You can change these strings in the Resources.resx file. If you do not want your analyzer to be localize-able, you can use regular strings for Title and MessageFormat.
         // See https://github.com/dotnet/roslyn/blob/main/docs/analyzers/Localizing%20Analyzers.md for more on localization
         private static readonly LocalizableString Title = new LocalizableResourceString(nameof(Resources.AnalyzerTitle), Resources.ResourceManager, typeof(Resources));
         private static readonly LocalizableString MessageFormat = new LocalizableResourceString(nameof(Resources.AnalyzerMessageFormat), Resources.ResourceManager, typeof(Resources));
         private static readonly LocalizableString Description = new LocalizableResourceString(nameof(Resources.AnalyzerDescription), Resources.ResourceManager, typeof(Resources));
-        private const string Category = "Naming";
+        private const string Category = "MyFailTest";
 
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: Description);
 
@@ -43,7 +43,8 @@ namespace Microsoft.Data.SqlClient.Analyzers
             var namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
 
             // Find just those named type symbols with names containing lowercase letters.
-            if (namedTypeSymbol.Name.ToCharArray().Any(char.IsLower))
+            //if (namedTypeSymbol.Name.ToCharArray().Any(char.IsLower))
+            if (namedTypeSymbol.Name == "MyFailTest")
             {
                 // For all such symbols, produce a diagnostic.
                 var diagnostic = Diagnostic.Create(Rule, namedTypeSymbol.Locations[0], namedTypeSymbol.Name);
