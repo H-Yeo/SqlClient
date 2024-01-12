@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Preview Release 5.2.0-preview4.23342.2] - 2023-12-08
 
+This update brings the below changes over the previous release:
+
 ### Added
 
 - Added `SqlBatch` support on .NET 6+ [#1825](https://github.com/dotnet/SqlClient/pull/1825), [#2223](https://github.com/dotnet/SqlClient/pull/2223)
@@ -100,10 +102,6 @@ This update brings the below changes over the previous release:
 - Fixed invariant mode checks. [#1917](https://github.com/dotnet/SqlClient/pull/1917)
 - Fixed GC behavior in TdsParser by adding array rental capability in TryReadPlpUnicodeChars. [#1866](https://github.com/dotnet/SqlClient/pull/1866)
 
-## [Stable release 5.1.2] - 2023-10-26
-
-This update brings the below changes over the previous release:
-
 ### Changed
 
 - Updated Azure Identity version from 1.7.0 to 1.8.0. [#1921](https://github.com/dotnet/SqlClient/pull/1921)
@@ -111,6 +109,31 @@ This update brings the below changes over the previous release:
 - Removed reference to Microsoft.Win32.Registry since it's shipped starting with .NET 6.0. [#1974](https://github.com/dotnet/SqlClient/pull/1974)
 - Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848](https://github.com/dotnet/SqlClient/pull/1848)
 - Code health improvements:[#1943](https://github.com/dotnet/SqlClient/pull/1943)[#1949](https://github.com/dotnet/SqlClient/pull/1949)[#1198](https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
+
+## [Stable release 5.1.4] - 2024-01-09
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed a deadlock problem for distributed transactions when on .NET.
+
+### Changed
+
+- Upgraded `Azure.Identity` dependency version to [1.10.3](https://www.nuget.org/packages/Azure.Identity/1.10.3) to address [CVE-2023-36414](https://github.com/advisories/GHSA-5mfx-4wcx-rv27).
+
+## [Stable release 5.1.3] - 2024-01-09
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed encryption downgrade issue. [CVE-2024-0056](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-0056)
+- Fixed certificate chain validation logic flow.
+
+## [Stable release 5.1.2] - 2023-10-26
+
+This update brings the below changes over the previous release:
 
 ### Fixed
 
@@ -362,6 +385,13 @@ This update brings the below changes over the previous release:
 
 - Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1419](https://github.com/dotnet/SqlClient/pull/1419) [#1425](https://github.com/dotnet/SqlClient/pull/1425)
 
+## [Stable release 4.0.5] - 2024-01-09
+
+### Fixed
+
+- Fixed encryption downgrade issue. [CVE-2024-0056](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-0056)
+- Fixed certificate chain validation logic flow.
+
 ## [Stable release 4.0.4] - 2023-10-30
 
 ### Fixed
@@ -511,6 +541,13 @@ This update brings the below changes over the previous release:
 - Optimized async method allocations in .NET Framework by porting changes from .NET Core. [#1084](https://github.com/dotnet/SqlClient/pull/1084)
 - Various code improvements [#902](https://github.com/dotnet/SqlClient/pull/902) [#925](https://github.com/dotnet/SqlClient/pull/925) [#933](https://github.com/dotnet/SqlClient/pull/933) [#934](https://github.com/dotnet/SqlClient/pull/934) [#1024](https://github.com/dotnet/SqlClient/pull/1024) [#1057](https://github.com/dotnet/SqlClient/pull/1057) [#1122](https://github.com/dotnet/SqlClient/pull/1122) [#1133](https://github.com/dotnet/SqlClient/pull/1133) [#1134](https://github.com/dotnet/SqlClient/pull/1134) [#1141](https://github.com/dotnet/SqlClient/pull/1141) [#1187](https://github.com/dotnet/SqlClient/pull/1187) [#1188](https://github.com/dotnet/SqlClient/pull/1188) [#1223](https://github.com/dotnet/SqlClient/pull/1223) [#1225](https://github.com/dotnet/SqlClient/pull/1225)  [#1226](https://github.com/dotnet/SqlClient/pull/1226)
 
+## [Stable release 3.1.5] - 2024-01-09
+
+### Fixed
+
+- Fixed encryption downgrade issue. [CVE-2024-0056](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-0056)
+- Fixed certificate chain validation logic flow.
+
 ## [Stable release 3.1.4] - 2023-10-31
 
 ### Fixed
@@ -589,6 +626,13 @@ This update brings the below changes over the previous release:
 ### Breaking Changes
 
 - Modified column encryption key store provider registrations to give built-in system providers precedence over providers registered on connection and command instances. [#1101](https://github.com/dotnet/SqlClient/pull/1101)
+
+## [Stable Release 2.1.7] - 2024-01-09
+
+### Fixed
+
+- Fixed encryption downgrade issue. [CVE-2024-0056](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-0056)
+- Fixed certificate chain validation logic flow.
 
 ## [Stable Release 2.1.6] - 2023-04-27
 
