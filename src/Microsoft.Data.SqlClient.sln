@@ -200,11 +200,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4F3CD363-B1E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.SqlServer.Server", "Microsoft.SqlServer.Server\Microsoft.SqlServer.Server.csproj", "{A314812A-7820-4565-A2A8-ABBE391C11E4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Analyzers", "Microsoft.Data.SqlClient.Analyzers\Microsoft.Data.SqlClient.Analyzers\Microsoft.Data.SqlClient.Analyzers.csproj", "{F22229D6-D944-43C0-9734-57C2759A84EB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.TestAnalyzer", "Microsoft.Data.SqlClient.Analyzers\Microsoft.Data.SqlClient.Analyzers\Microsoft.Data.SqlClient.TestAnalyzer.csproj", "{F22229D6-D944-43C0-9734-57C2759A84EB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Analyzers.Test", "Microsoft.Data.SqlClient.Analyzers\Microsoft.Data.SqlClient.Analyzers.Test\Microsoft.Data.SqlClient.Analyzers.Test.csproj", "{D73C73F0-2552-4D37-956D-65377ABEFCBC}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Analyzers.Vsix", "Microsoft.Data.SqlClient.Analyzers\Microsoft.Data.SqlClient.Analyzers.Vsix\Microsoft.Data.SqlClient.Analyzers.Vsix.csproj", "{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.TestAnalyzer.Tests", "Microsoft.Data.SqlClient.Analyzers\Microsoft.Data.SqlClient.Analyzers.Test\Microsoft.Data.SqlClient.TestAnalyzer.Tests.csproj", "{D73C73F0-2552-4D37-956D-65377ABEFCBC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -502,18 +500,6 @@ Global
 		{D73C73F0-2552-4D37-956D-65377ABEFCBC}.Release|x64.Build.0 = Release|Any CPU
 		{D73C73F0-2552-4D37-956D-65377ABEFCBC}.Release|x86.ActiveCfg = Release|Any CPU
 		{D73C73F0-2552-4D37-956D-65377ABEFCBC}.Release|x86.Build.0 = Release|Any CPU
-		{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F}.Debug|x64.Build.0 = Debug|Any CPU
-		{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F}.Debug|x86.Build.0 = Debug|Any CPU
-		{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F}.Release|x64.ActiveCfg = Release|Any CPU
-		{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F}.Release|x64.Build.0 = Release|Any CPU
-		{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F}.Release|x86.ActiveCfg = Release|Any CPU
-		{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -551,7 +537,6 @@ Global
 		{A314812A-7820-4565-A2A8-ABBE391C11E4} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
 		{F22229D6-D944-43C0-9734-57C2759A84EB} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
 		{D73C73F0-2552-4D37-956D-65377ABEFCBC} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
-		{C527BA18-1126-4F4F-B2D6-1E34BA5BE11F} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}

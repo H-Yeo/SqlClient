@@ -7,11 +7,12 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.Data.SqlClient.TestAnalyzer;
 
 namespace Microsoft.Data.SqlClient.Analyzers
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class MicrosoftDataSqlClientAnalyzersAnalyzer : DiagnosticAnalyzer
+    public class MicrosoftDataSqlClientTestAnalyzer : DiagnosticAnalyzer
     {
         public const string DiagnosticId = "MicrosoftDataSqlClientAnalyzers";
 
