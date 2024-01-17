@@ -29,4 +29,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\AnalyzerCheckForTestName\AnalyzerCheckForTestName\AnalyzerCheckForTestName.csproj" 
+					  PrivateAssets="all"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="Analyzer"
+                      SetTargetFramework="TargetFramework=netstandard2.0" />
+  </ItemGroup>   
 </Project>

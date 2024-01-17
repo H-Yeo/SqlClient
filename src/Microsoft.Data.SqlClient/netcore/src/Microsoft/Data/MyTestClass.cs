@@ -9,7 +9,7 @@ namespace MyTestNameSpace.Data
     /// <summary>
     /// 
     /// </summary>
-    public class TestName //TestName is the bad class name "TestName"
+    public class TestNamePass //TestName is the bad class name "TestName"
     {
     }
 }
