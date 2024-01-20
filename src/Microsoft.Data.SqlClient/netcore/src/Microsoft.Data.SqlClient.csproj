@@ -1013,8 +1013,8 @@
 					  PrivateAssets="all"
                       ReferenceOutputAssembly="false"
                       OutputItemType="Analyzer"
-                      SetTargetFramework="TargetFramework=netstandard2.0" />
-  </ItemGroup>  
+                      SetTargetFramework="TargetFramework=netstandard2.0" />			  
+  </ItemGroup>   
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
   <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
