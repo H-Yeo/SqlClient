@@ -3,9 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Linq;
 using System.Net;
-using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.SqlServer.TDS.EndPoint;
@@ -22,7 +20,10 @@ namespace Microsoft.Data.SqlClient.Tests
 
         private SqlConnectionStringBuilder _connectionStringBuilder;
 
-        public TestTdsServer(TDSServerArguments args) : base(args) { }
+        public TestTdsServer(TDSServerArguments args) : base(args) 
+        {
+            ServicePointManager.SecurityProtocol = SecurityProtocolTypeExtensions.Tls12;
+        }
 
         public TestTdsServer(QueryEngine engine, TDSServerArguments args) : base(args)
         {
@@ -51,7 +52,6 @@ namespace Microsoft.Data.SqlClient.Tests
             args.Encryption = encryptionType;
 
             TestTdsServer server = engine == null ? new TestTdsServer(args) : new TestTdsServer(engine, args);
-            
             server._endpoint = new TDSServerEndPoint(server) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
             server._endpoint.EndpointName = methodName;
             // The server EventLog should be enabled as it logs the exceptions.
@@ -60,15 +60,14 @@ namespace Microsoft.Data.SqlClient.Tests
 
             int port = server._endpoint.ServerEndPoint.Port;
 
-            String hostName = Dns.GetHostName().ToUpper();
+            string hostName = Dns.GetHostName().ToUpper();
 
             server._connectionStringBuilder = new SqlConnectionStringBuilder()
             {
                 DataSource = $"{hostName}," + port,
-                //DataSource = $"localhost,{port}",
                 ConnectTimeout = connectionTimeout,
                 Encrypt = (encryptionType == TDSPreLoginTokenEncryptionType.Off ? SqlConnectionEncryptOption.Optional : SqlConnectionEncryptOption.Mandatory)
-            }; 
+            };
             server.ConnectionString = server._connectionStringBuilder.ConnectionString;
             return server;
         }
@@ -83,6 +82,12 @@ namespace Microsoft.Data.SqlClient.Tests
         public void Dispose() => _endpoint?.Stop();
 
         public string ConnectionString { get; private set; }
+    }
 
+    internal static class SecurityProtocolTypeExtensions
+    {
+        public const SecurityProtocolType Tls12 = (SecurityProtocolType)3072;
+        public const SecurityProtocolType Tls11 = (SecurityProtocolType)768;
+        public const SecurityProtocolType Tls10 = (SecurityProtocolType)192;
     }
 }

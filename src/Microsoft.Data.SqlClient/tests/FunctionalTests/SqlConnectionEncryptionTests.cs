@@ -21,40 +21,31 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void ConnectionTest()
         {
+            ServicePointManager.SecurityProtocol = SecurityProtocolTypeExtensions.Tls12;
+
             using (SqlClientListener listener = new SqlClientListener())
             {
-                // Happy path
-                //AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
-
-                //using TestTdsServer server = TestTdsServer.StartTestServer(false, false, 5, encryptionType: TDSPreLoginTokenEncryptionType.NotSupported);
-                //SqlConnectionStringBuilder builder = new(server.ConnectionString)
-                //{
-                //    IntegratedSecurity = true,
-                //    Encrypt = false,
-                //};
-
-                //using SqlConnection connection = new(builder.ConnectionString);
-                //connection.Open();
-                //Assert.Equal(ConnectionState.Open, connection.State);
-
                 AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
 
-                TestTdsServer server = TestTdsServer.StartTestServer(enableFedAuth: false, enableLog: false, connectionTimeout: 15,
-                                        methodName: "",
-                                        new X509Certificate2("localhostcert.pfx", "nopassword", X509KeyStorageFlags.UserKeySet),
+                TestTdsServer server2 = TestTdsServer.StartTestServer(
+                                        enableFedAuth: false,
+                                        enableLog: false,
+                                        connectionTimeout: 15,
+                                        encryptionCertificate: new X509Certificate2("localhostcert.pfx", "nopassword", X509KeyStorageFlags.UserKeySet),
                                         encryptionType: TDSPreLoginTokenEncryptionType.On);
 
-                SqlConnectionStringBuilder builder = new(server.ConnectionString)
+                SqlConnectionStringBuilder builder2 = new(server2.ConnectionString)
                 {
                     Encrypt = SqlConnectionEncryptOption.Mandatory,
                     TrustServerCertificate = true,
                     IntegratedSecurity = true,
+                    DataSource = "localhost"
                 };
 
-                using (SqlConnection connection = new(builder.ConnectionString))
+                using (SqlConnection connection2 = new(builder2.ConnectionString))
                 {
-                    connection.Open();
-                    Assert.Equal(ConnectionState.Open, connection.State);
+                    connection2.Open();
+                    Assert.Equal(ConnectionState.Open, connection2.State);
                 }
             }
         }
@@ -64,14 +55,18 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             using (SqlClientListener listener = new SqlClientListener())
             {
-                using (TestTdsServer server = TestTdsServer.StartTestServer(false, false, 60, "",
-                new X509Certificate2("localhostcert.pfx", "nopassword", X509KeyStorageFlags.UserKeySet),
-                encryptionType: TDSPreLoginTokenEncryptionType.On))
+                using (TestTdsServer server = TestTdsServer.StartTestServer(
+                                              enableFedAuth: false,
+                                              enableLog: false,
+                                              connectionTimeout: 60,
+                                              encryptionCertificate: new X509Certificate2("localhostcert.pfx", "nopassword", X509KeyStorageFlags.UserKeySet),
+                                              encryptionType: TDSPreLoginTokenEncryptionType.On))
                 {
                     SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(server.ConnectionString);
                     builder.Encrypt = SqlConnectionEncryptOption.Mandatory;
                     builder.TrustServerCertificate = false;
                     builder.ServerCertificate = "localhostcert.cer";
+                    builder.DataSource = "localhost";
                     using (SqlConnection connection = new(builder.ConnectionString))
                     {
                         connection.Open();
